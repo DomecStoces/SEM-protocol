@@ -5,6 +5,7 @@ library(MASS)
 library(dplyr)
 library(DHARMa) 
 library(semPlot)
+library(lavaan)
 
 # 1. Simulate example datasheet
 set.seed(123)
