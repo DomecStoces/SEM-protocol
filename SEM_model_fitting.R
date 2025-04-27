@@ -6,6 +6,8 @@ library(dplyr)
 library(DHARMa) 
 library(semPlot)
 library(lavaan)
+library(multcompView)
+library(DiagrammeR)
 
 # 1. Simulate example datasheet
 set.seed(123)
@@ -69,3 +71,24 @@ semPlot::semPaths(sem_lavaan, "std", edge.label.cex=1.2, sizeMan=7, fade=FALSE)
 # 6. Notes
 # - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
 # - You can inspect the summary to see direct and indirect effects.
+
+grViz("
+digraph sem {
+  management -> CWD
+  management -> FWD
+  management -> HerbCover
+  management -> LitterDepth
+  CWD -> SpeciesDensity
+  FWD -> SpeciesDensity
+  HerbCover -> SpeciesDensity
+  LitterDepth -> SpeciesDensity
+  CWD -> ActivityDensity
+  FWD -> ActivityDensity
+  HerbCover -> ActivityDensity
+  LitterDepth -> ActivityDensity
+  CWD -> ConservationValue
+  FWD -> ConservationValue
+  HerbCover -> ConservationValue
+  LitterDepth -> ConservationValue
+}
+")
