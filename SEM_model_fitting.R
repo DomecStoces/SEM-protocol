@@ -29,7 +29,6 @@ data <- data.frame(management, PlotID, CWD, FWD, HerbCover, LitterDepth,
                    SpeciesDensity, ActivityDensity, ConservationValue)
 
 # 2. Fit GLMMs (component models)
-
 # Environmental variables explained by management
 glmm_CWD <- glmer.nb(CWD ~ management + (1|PlotID), data = data)
 glmm_FWD <- glmer.nb(FWD ~ management + (1|PlotID), data = data)
