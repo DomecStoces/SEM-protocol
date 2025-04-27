@@ -23,10 +23,10 @@ FWD <- ifelse(management == "Extensive", rnorm(n_samples, 2, 0.5), rnorm(n_sampl
 HerbCover <- ifelse(management == "Extensive", rnorm(n_samples, 50, 10), rnorm(n_samples, 20, 10))
 LitterDepth <- ifelse(management == "Extensive", rnorm(n_samples, 6, 1), rnorm(n_samples, 2, 1))
 
-# Simulate carabid response variables (neg binomial distributed)
-SpeciesDensity <- rnbinom(n_samples, size = 1, mu = 5 + 0.5 * CWD - 0.3 * FWD + 0.2 * HerbCover)
-ActivityDensity <- rnbinom(n_samples, size = 1, mu = 10 + 0.3 * CWD + 0.1 * LitterDepth)
-ConservationValue <- rnbinom(n_samples, size = 1, mu = 2 + 0.4 * HerbCover)
+# Simulate carabid response variables (Poisson distributed)
+SpeciesDensity <- rpois(n_samples, lambda = exp(1 + 0.05 * CWD - 0.03 * FWD + 0.02 * HerbCover))
+ActivityDensity <- rpois(n_samples, lambda = exp(1 + 0.03 * CWD + 0.01 * LitterDepth))
+ConservationValue <- rpois(n_samples, lambda = exp(0.5 + 0.04 * HerbCover))
 
 # Assemble dataset
 data <- data.frame(management, PlotID, CWD, FWD, HerbCover, LitterDepth, 
