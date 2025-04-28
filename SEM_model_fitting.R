@@ -49,18 +49,7 @@ sem_model <- psem(
 # 3. Summarize the SEM
 summary(sem_model)
 
-# 4. Optional: Address conflicts if needed (missing paths)
-# Example using conservative assumption
-# summary(sem_model, conserve = TRUE)
-# OR specifying direction if needed
-# summary(sem_model, direction = c("ActivityDensity <- HerbCover"))
-
-# 5. Basic SEM plot
-plot(sem_model)
-# 6. Notes
-# - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
-
-# 7. Apply DHARMa residual checks for each model
+# 4. Apply DHARMa residual checks for each model
 models <- sem_model$models
 
 par(mfrow = c(3, 3)) # Arrange plots in a 3x3 grid (adjust if needed)
@@ -70,7 +59,19 @@ for (i in seq_along(models)) {
   res <- simulateResiduals(models[[i]])
   plot(res, main = paste("Model", i))
 }
-par(mfrow = c(1, 1)) # Reset layout
+# Reset layout
+par(mfrow = c(1, 1))
+
+# 5. Optional: Address conflicts if needed (missing paths) OR overdispersion from models in DHARMa
+# Example using conservative assumption
+# summary(sem_model, conserve = TRUE)
+# OR specifying direction if needed
+# summary(sem_model, direction = c("ActivityDensity <- HerbCover"))
+
+# 6. Basic SEM plot
+plot(sem_model)
+# 7. Notes
+# - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
 
 # 8. Visualization of psem model. You need to manually set grid from summary(sem_model)
 grViz("
