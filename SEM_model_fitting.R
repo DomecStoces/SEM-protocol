@@ -8,6 +8,7 @@ library(semPlot)
 library(lavaan)
 library(multcompView)
 library(DiagrammeR)
+library(tidySEM)
 
 # 1. Simulate example datasheet
 set.seed(123)
@@ -28,45 +29,39 @@ SpeciesDensity <- rpois(n_samples, lambda = exp(1 + 0.05 * CWD - 0.03 * FWD + 0.
 ActivityDensity <- rpois(n_samples, lambda = exp(1 + 0.03 * CWD + 0.01 * LitterDepth))
 ConservationValue <- rpois(n_samples, lambda = exp(0.5 + 0.04 * HerbCover))
 
-# Assemble dataset
+# Assemble into one dataframe
 data <- data.frame(management, PlotID, CWD, FWD, HerbCover, LitterDepth, 
                    SpeciesDensity, ActivityDensity, ConservationValue)
 
-# 2. Fit GLMMs (component models)
-# Environmental variables explained by management
-glmm_CWD <- glmer.nb(CWD ~ management + (1|PlotID), data = data)
-glmm_FWD <- glmer.nb(FWD ~ management + (1|PlotID), data = data)
-glmm_HerbCover <- glmer.nb(HerbCover ~ management + (1|PlotID), data = data)
-glmm_LitterDepth <- glmer.nb(LitterDepth ~ management + (1|PlotID), data = data)
-
-# Carabid community responses explained by environmental variables
-# Species density
-model_species_density <- glmer.nb(SpeciesDensity ~ CWD + FWD + HerbCover + LitterDepth + (1|PlotID), data = data)
-
-# Activity density
-model_activity_density <- glmer.nb(ActivityDensity ~ CWD + FWD + HerbCover + LitterDepth + (1|PlotID), data = data)
-
-# Conservation value
-model_conservation_value <- glmer.nb(ConservationValue ~ CWD + FWD + HerbCover + LitterDepth + (1|PlotID), data = data)
-
-# 3. Combine models into a piecewise SEM
+# 2. Create the list of models
 sem_model <- psem(
-  glmm_CWD,
-  glmm_FWD,
-  glmm_HerbCover,
-  glmm_LitterDepth,
-  model_species_density,
-  model_activity_density,
-  model_conservation_value
+  
+  # Environmental variables explained by management
+  lm(CWD ~ management, data = data),
+  lm(FWD ~ management, data = data),
+  lm(HerbCover ~ management, data = data),
+  lm(LitterDepth ~ management, data = data),
+  
+  # Carabid community responses explained by habitat structure
+  glm(SpeciesDensity ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
+  glm(ActivityDensity ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
+  glm(ConservationValue ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
+  
+  # Dataset used
+  data = data
 )
 
-# 4. Summarize the SEM model
+# 3. Summarize the SEM
 summary(sem_model)
 
-# 5. SEM diagram using semPlot
-# Convert piecewiseSEM to lavaan object for plotting
-sem_lavaan <- as_lavaan(sem_model)
-semPlot::semPaths(sem_lavaan, "std", edge.label.cex=1.2, sizeMan=7, fade=FALSE)
+# 4. Optional: Address conflicts if needed (missing paths)
+# Example using conservative assumption
+# summary(sem_model, conserve = TRUE)
+# OR specifying direction if needed
+# summary(sem_model, direction = c("ActivityDensity <- HerbCover"))
+
+# 5. Basic SEM plot
+plot(sem_model)
 
 # 6. Notes
 # - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
