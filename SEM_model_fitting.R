@@ -10,26 +10,25 @@ library(multcompView)
 library(DiagrammeR)
 library(tidySEM)
 
-# 1. Simulate example datasheet
+# 1. Simulate example datasheet (Gaussian data)
 set.seed(123)
 n_samples <- 30
 
-# Randomly assign management types and plot IDs
 management <- rep(c("Extensive", "Intensive"), each = 15)
 PlotID <- factor(rep(1:6, each = 5))
 
-# Simulate environmental variables affected by management
+# Simulate environmental variables
 CWD <- ifelse(management == "Extensive", rnorm(n_samples, 5, 1), rnorm(n_samples, 2, 1))
 FWD <- ifelse(management == "Extensive", rnorm(n_samples, 2, 0.5), rnorm(n_samples, 4, 0.5))
 HerbCover <- ifelse(management == "Extensive", rnorm(n_samples, 50, 10), rnorm(n_samples, 20, 10))
 LitterDepth <- ifelse(management == "Extensive", rnorm(n_samples, 6, 1), rnorm(n_samples, 2, 1))
 
-# Simulate carabid response variables (Poisson distributed)
-SpeciesDensity <- rpois(n_samples, lambda = exp(1 + 0.05 * CWD - 0.03 * FWD + 0.02 * HerbCover))
-ActivityDensity <- rpois(n_samples, lambda = exp(1 + 0.03 * CWD + 0.01 * LitterDepth))
-ConservationValue <- rpois(n_samples, lambda = exp(0.5 + 0.04 * HerbCover))
+# RESPONSE variables now NORMAL, not Poisson
+SpeciesDensity <- 1 + 0.05 * CWD - 0.03 * FWD + 0.02 * HerbCover + rnorm(n_samples, 0, 2)
+ActivityDensity <- 1 + 0.03 * CWD + 0.01 * LitterDepth + rnorm(n_samples, 0, 2)
+ConservationValue <- 0.5 + 0.04 * HerbCover + rnorm(n_samples, 0, 2)
 
-# Assemble into one dataframe
+# Assemble
 data <- data.frame(management, PlotID, CWD, FWD, HerbCover, LitterDepth, 
                    SpeciesDensity, ActivityDensity, ConservationValue)
 
@@ -43,9 +42,9 @@ sem_model <- psem(
   lm(LitterDepth ~ management, data = data),
   
   # Carabid community responses explained by habitat structure
-  glm(SpeciesDensity ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
-  glm(ActivityDensity ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
-  glm(ConservationValue ~ CWD + FWD + HerbCover + LitterDepth, family = poisson, data = data),
+  glm(SpeciesDensity ~ CWD + FWD + HerbCover + LitterDepth, family = gaussian, data = data),
+  glm(ActivityDensity ~ CWD + FWD + HerbCover + LitterDepth, family = gaussian, data = data),
+  glm(ConservationValue ~ CWD + FWD + HerbCover + LitterDepth, family = gaussian, data = data),
   
   # Dataset used
   data = data
@@ -65,10 +64,10 @@ plot(sem_model, standardize = FALSE)
 # 6. Notes
 # - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
 # - You can inspect the summary to see direct and indirect effects.
+
 paths <- coefs(sem_model)
 sem_model_tidy <- prep_sem(paths)
 plot(sem_model_tidy)
-
 
 grViz("
 digraph sem {
