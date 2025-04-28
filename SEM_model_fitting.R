@@ -61,11 +61,14 @@ summary(sem_model)
 # summary(sem_model, direction = c("ActivityDensity <- HerbCover"))
 
 # 5. Basic SEM plot
-plot(sem_model)
-
+plot(sem_model, standardize = FALSE)
 # 6. Notes
 # - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
 # - You can inspect the summary to see direct and indirect effects.
+paths <- coefs(sem_model)
+sem_model_tidy <- prep_sem(paths)
+plot(sem_model_tidy)
+
 
 grViz("
 digraph sem {
