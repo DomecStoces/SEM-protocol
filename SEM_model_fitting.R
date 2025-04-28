@@ -1,14 +1,10 @@
 #Works only in newer version of R 4.5.0
 library(piecewiseSEM)
 library(lme4)
-library(MASS)
 library(dplyr)
 library(DHARMa) 
-library(semPlot)
-library(lavaan)
 library(multcompView)
 library(DiagrammeR)
-library(tidySEM)
 
 # 1. Simulate example datasheet (Gaussian data)
 set.seed(123)
@@ -60,32 +56,61 @@ summary(sem_model)
 # summary(sem_model, direction = c("ActivityDensity <- HerbCover"))
 
 # 5. Basic SEM plot
-plot(sem_model, standardize = FALSE)
+plot(sem_model)
 # 6. Notes
 # - Fisher's C tests whether the model as a whole fits well (high P-value > 0.05 = good fit)
-# - You can inspect the summary to see direct and indirect effects.
 
-paths <- coefs(sem_model)
-sem_model_tidy <- prep_sem(paths)
-plot(sem_model_tidy)
+# 7. Apply DHARMa residual checks for each model
+models <- sem_model$models
 
+par(mfrow = c(3, 3)) # Arrange plots in a 3x3 grid (adjust if needed)
+
+for (i in seq_along(models)) {
+  cat("\nModel", i, "\n")
+  res <- simulateResiduals(models[[i]])
+  plot(res, main = paste("Model", i))
+}
+par(mfrow = c(1, 1)) # Reset layout
+
+# 8. Visualization of psem model. You need to manually set grid from summary(sem_model)
 grViz("
-digraph sem {
-  management -> CWD
-  management -> FWD
-  management -> HerbCover
-  management -> LitterDepth
-  CWD -> SpeciesDensity
-  FWD -> SpeciesDensity
-  HerbCover -> SpeciesDensity
-  LitterDepth -> SpeciesDensity
-  CWD -> ActivityDensity
-  FWD -> ActivityDensity
-  HerbCover -> ActivityDensity
-  LitterDepth -> ActivityDensity
-  CWD -> ConservationValue
-  FWD -> ConservationValue
-  HerbCover -> ConservationValue
-  LitterDepth -> ConservationValue
+digraph SEM {
+  
+  rankdir=LR;
+  
+  node [shape=box, style=filled, color=lightblue, fontname=Helvetica];
+  
+  management [label='Management']
+  CWD [label='Coarse Woody Debris\\nR²=0.79']
+  FWD [label='Fine Woody Debris\\nR²=0.82']
+  HerbCover [label='Herb Cover\\nR²=0.74']
+  LitterDepth [label='Litter Depth\\nR²=0.87']
+  SpeciesDensity [label='Species Density\\nR²=0.32']
+  ActivityDensity [label='Activity Density\\nR²=0.27']
+  ConservationValue [label='Conservation Value\\nR²=0.21']
+  
+  # Management paths
+  management -> CWD [color=red, penwidth=2]
+  management -> FWD [color=red, penwidth=2]
+  management -> HerbCover [color=red, penwidth=2]
+  management -> LitterDepth [color=red, penwidth=2]
+  
+  # Paths to SpeciesDensity
+  CWD -> SpeciesDensity [color=red, penwidth=2]
+  FWD -> SpeciesDensity [color=grey, penwidth=1]
+  HerbCover -> SpeciesDensity [color=green, penwidth=2]
+  LitterDepth -> SpeciesDensity [color=green, penwidth=2]
+  
+  # Paths to ActivityDensity
+  CWD -> ActivityDensity [color=green, penwidth=2]
+  FWD -> ActivityDensity [color=green, penwidth=2]
+  HerbCover -> ActivityDensity [color=green, penwidth=2]
+  LitterDepth -> ActivityDensity [color=red, penwidth=2]
+  
+  # Paths to ConservationValue
+  CWD -> ConservationValue [color=grey, penwidth=1]
+  FWD -> ConservationValue [color=red, penwidth=2]
+  HerbCover -> ConservationValue [color=red, penwidth=2]
+  LitterDepth -> ConservationValue [color=grey, penwidth=1]
 }
 ")
